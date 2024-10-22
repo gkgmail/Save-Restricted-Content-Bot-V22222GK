@@ -57,9 +57,9 @@ async def get_msg(userbot, sender, edit_id, msg_link, i, message):
                     devgaganin = await app.send_message(sender, msg.text.markdown)
                     if msg.pinned_message:
                         try:
-                            await devgaganin.pin(both_sides=True)
+                            await saverestriction4.pin(both_sides=True)
                         except Exception as e:
-                            await devgaganin.pin()
+                            await saverestriction4.pin()
                     await saverestriction4.copy(LOG_GROUP)                  
                     await edit.delete()
                     return
