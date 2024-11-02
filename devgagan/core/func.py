@@ -85,16 +85,12 @@ async def get_seconds(time_string):
 
 
 PROGRESS_BAR = """\n
-╭──⌯════BOT STATICS══════⌯──╮ 
-
-├⚡ Downloded|﹝91.9%﹞ 
-
-├🚀 Speed » 13.78MiB/s 
-
-├📟 Processed » 220.50MiB
-
-├🧲 Size - ETA » 240.02MiB - 1s 
-╰─════════ [𝐕𝐢𝐥𝐥𝐚𝐧] ════════─╯
+╭──⌯═BOTSTATICS═══⌯──╮ 
+├⚡  ᗪOᗯᑎᒪOᗪEᗪ : {1}/{2}
+├✅  ᑕOᗰᑭᒪETEᗪ : {0}%
+├🚀  𝚂𝚙𝚎𝚎𝚍 : {3}/s 
+├🧲 Tιɱҽ : {4}
+╰─════ [𝐕𝐢𝐥𝐥𝐚𝐧] ══════─╯
 
 """
 
@@ -115,7 +111,7 @@ async def progress_bar(current, total, ud_type, message, start):
         estimated_total_time = TimeFormatter(milliseconds=estimated_total_time)
 
         progress = "{0}{1}".format(
-            ''.join([" ▓" for i in range(math.floor(percentage / 10))]),
+            ''.join(["▓" for i in range(math.floor(percentage / 10))]),
             ''.join(["▒" for i in range(10 - math.floor(percentage / 10))]))
             
         tmp = progress + PROGRESS_BAR.format( 
