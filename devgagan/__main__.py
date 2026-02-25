@@ -1,63 +1,30 @@
-# ---------------------------------------------------
-# File Name: __main__.py
-# Description: A Pyrogram bot for downloading files from Telegram channels or groups 
-#              and uploading them back to Telegram.
-# Author: Gagan
-# GitHub: https://github.com/devgaganin/
-# Telegram: https://t.me/team_spy_pro
-# YouTube: https://youtube.com/@dev_gagan
-# Created: 2025-01-11
-# Last Modified: 2025-01-11
-# Version: 2.0.5
-# License: MIT License
-# ---------------------------------------------------
+from flask import Flask, request
+import telebot
 
-import asyncio
-import importlib
-import gc
-from pyrogram import idle
-from devgagan.modules import ALL_MODULES
-from devgagan.core.mongo.plans_db import check_and_remove_expired_users
-from aiojobs import create_scheduler
+TOKEN = "8005476267:AAFBCe2Vgr9MUdEk2iGsglMNaarYX83rR-U"
+APP_URL = "https://app.koyeb.com/services/0f41edfe-bd2e-4c1a-bc3b-8cd6bdb58cdb"
 
-# ----------------------------Bot-Start---------------------------- #
+bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
 
-loop = asyncio.get_event_loop()
+@bot.message_handler(commands=['start'])
+def start(msg):
+    bot.reply_to(msg, "Webhook connected 🚀")
 
-# Function to schedule expiry checks
-async def schedule_expiry_check():
-    scheduler = await create_scheduler()
-    while True:
-        await scheduler.spawn(check_and_remove_expired_users())
-        await asyncio.sleep(60)  # Check every hour
-        gc.collect()
+@app.route(f"/{TOKEN}", methods=["POST"])
+def webhook():
+    update = telebot.types.Update.de_json(
+        request.stream.read().decode("utf-8")
+    )
+    bot.process_new_updates([update])
+    return "OK", 200
 
-async def devggn_boot():
-    for all_module in ALL_MODULES:
-        importlib.import_module("devgagan.modules." + all_module)
-    print("""
----------------------------------------------------
-📂 Bot Deployed successfully ...
-📝 Description: A Pyrogram bot for downloading files from Telegram channels or groups 
-                and uploading them back to Telegram.
-👨‍💻 Author: Gagan
-🌐 GitHub: https://github.com/devgaganin/
-📬 Telegram: https://t.me/team_spy_pro
-▶️ YouTube: https://youtube.com/@dev_gagan
-🗓️ Created: 2025-01-11
-🔄 Last Modified: 2025-01-11
-🛠️ Version: 2.0.5
-📜 License: MIT License
----------------------------------------------------
-""")
+@app.route("/")
+def home():
+    return "Bot is alive"
 
-    asyncio.create_task(schedule_expiry_check())
-    print("Auto removal started ...")
-    await idle()
-    print("Bot stopped...")
-
+bot.remove_webhook()
+bot.set_webhook(url=f"{APP_URL}/{TOKEN}")
 
 if __name__ == "__main__":
-    loop.run_until_complete(devggn_boot())
-
-# ------------------------------------------------------------------ #
+    app.run(host="0.0.0.0", port=8000)
