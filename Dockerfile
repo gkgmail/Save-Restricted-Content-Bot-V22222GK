@@ -1,14 +1,32 @@
-FROM python:3.10.4-slim
-RUN apt update && apt upgrade -y
-RUN apt-get install git curl python3-pip ffmpeg -y
-RUN apt-get -y install git
-RUN apt-get install -y wget python3-pip curl bash neofetch ffmpeg software-properties-common
-COPY requirements.txt .
+FROM python:3.10-slim-bookworm
 
-RUN pip3 install wheel
-RUN pip3 install --no-cache-dir -U -r requirements.txt
+# Environment
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# System dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    wget \
+    ffmpeg \
+    bash \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Work directory
 WORKDIR /app
+
+# Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip wheel \
+    && pip install --no-cache-dir -r requirements.txt
+
+# App source
 COPY . .
+
+# Port (Koyeb / webhook use case)
 EXPOSE 8000
 
-CMD flask run -h 0.0.0.0 -p 8000 & python3 -m devgagan
+# Start bot (ONLY ONE PROCESS)
+CMD ["python3", "-m", "devgagan"]
