@@ -81,12 +81,13 @@ async def get_seconds(time_string):
         return value * 86400 * 365
     else:
         return 0
-PROGRESS_BAR = """\n
-│ **__Completed:__** {1}/{2}
-│ **__Bytes:__** {0}%
-│ **__Speed:__** {3}/s
-│ **__ETA:__** {4}
-╰─────────────────────╯
+╭━━━━❰ᴘʀᴏɢʀᴇss ʙᴀʀ❱━➣
+┣⪼ 🗂️ : 145.0 MB | 368.6 MB
+┣⪼ ⏳️ : 39.34%
+┣⪼ 🚀 : 4.83 MB/s
+┣⪼ ⏱️ : 1m, 16s
+┣⪼Message ID: 516
+╰━━━━━━━━━━━━━━━➣
 """
 async def progress_bar(current, total, ud_type, message, start):
 
@@ -104,8 +105,8 @@ async def progress_bar(current, total, ud_type, message, start):
         estimated_total_time = TimeFormatter(milliseconds=estimated_total_time)
 
         progress = "{0}{1}".format(
-            ''.join(["🔵" for i in range(math.floor(percentage / 10))]),
-            ''.join(["⚪" for i in range(10 - math.floor(percentage / 10))]))
+            ''.join(["🟥" for i in range(math.floor(percentage / 10))]),
+            ''.join(["⬜" for i in range(10 - math.floor(percentage / 10))]))
 
         tmp = progress + PROGRESS_BAR.format( 
             round(percentage, 2),
