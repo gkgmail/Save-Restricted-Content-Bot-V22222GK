@@ -4,7 +4,7 @@ import telebot
 TOKEN = "8005476267:AAFBCe2Vgr9MUdEk2iGsglMNaarYX83rR-U"
 APP_URL = "https://app.koyeb.com/services/0f41edfe-bd2e-4c1a-bc3b-8cd6bdb58cdb"
 
-# ⚠️ यहाँ अपनी असली Dump ID डालें (जैसे: -1004447354945)
+# आपकी असली Dump ID यहाँ सेट है
 DUMP_CHAT_ID = -1004447354945
 
 bot = telebot.TeleBot(TOKEN)
@@ -21,21 +21,20 @@ def handle_all_messages(msg):
     # यूज़र को रिप्लाई देना कि काम शुरू हो गया है
     bot.reply_to(msg, "Processing your request... 🔄")
     
-    # डंप चैनल में फॉरवर्ड करने का सटीक कोड
-    if DUMP_CHAT_ID != -100xxxxxxxxxx:
-        try:
-            # पहले डंप चैनल में यूज़र की जानकारी भेजें
-            user_info = f"📥 **NEW BATCH REQUEST**\n\n👤 **Name:** {msg.from_user.first_name}\n🆔 **ID:** `{msg.from_user.id}`"
-            bot.send_message(chat_id=DUMP_CHAT_ID, text=user_info)
-            
-            # अब यूज़र का भेजा हुआ मैसेज/फ़ाइल डंप चैनल में सीधे फॉरवर्ड करें
-            bot.forward_message(
-                chat_id=DUMP_CHAT_ID,
-                from_chat_id=msg.chat.id,
-                message_id=msg.message_id
-            )
-        except Exception as e:
-            print(f"🔴 Dump Error: {e}")
+    # डंप चैनल में फॉरवर्ड करने का सटीक कोड (बिना किसी फालतू शर्त के)
+    try:
+        # पहले डंप चैनल में यूज़र की जानकारी भेजें
+        user_info = f"📥 **NEW BATCH REQUEST**\n\n👤 **Name:** {msg.from_user.first_name}\n🆔 **ID:** `{msg.from_user.id}`"
+        bot.send_message(chat_id=DUMP_CHAT_ID, text=user_info)
+        
+        # अब यूज़र का भेजा हुआ मैसेज/फ़ाइल डंप चैनल में सीधे फॉरवर्ड करें
+        bot.forward_message(
+            chat_id=DUMP_CHAT_ID,
+            from_chat_id=msg.chat.id,
+            message_id=msg.message_id
+        )
+    except Exception as e:
+        print(f"🔴 Dump Error: {e}")
 
 # 3. Webhook Handling
 @app.route(f"/{TOKEN}", methods=["POST"])
