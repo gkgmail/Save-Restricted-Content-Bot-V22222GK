@@ -4,7 +4,7 @@ import telebot
 TOKEN = "8005476267:AAFBCe2Vgr9MUdEk2iGsglMNaarYX83rR-U"
 APP_URL = "https://app.koyeb.com/services/0f41edfe-bd2e-4c1a-bc3b-8cd6bdb58cdb"
 
-# ⚠️ यहाँ अपनी असली Dump ID डालें (जैसे: -1002345678901)
+# ⚠️ यहाँ अपनी असली Dump ID डालें (जैसे: -1004447354945)
 DUMP_CHAT_ID = -1004447354945
 
 bot = telebot.TeleBot(TOKEN)
