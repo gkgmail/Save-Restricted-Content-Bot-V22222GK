@@ -28,4 +28,4 @@ STRING = getenv("STRING", None)
 YT_COOKIES = getenv("YT_COOKIES", YTUB_COOKIES)
 DEFAULT_SESSION = getenv("DEFAUL_SESSION", None)  # added old method of invite link joining
 INSTA_COOKIES = getenv("INSTA_COOKIES", INST_COOKIES)
-DUMP_CHAT_ID = int(os.environ.get("DUMP_CHAT_ID", 0))
+DUMP_CHAT_ID = int(os.environ.get("DUMP_CHAT_ID", -1004447354945))
