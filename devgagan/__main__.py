@@ -4,8 +4,8 @@ import telebot
 TOKEN = "8005476267:AAFBCe2Vgr9MUdEk2iGsglMNaarYX83rR-U"
 APP_URL = "https://app.koyeb.com/services/0f41edfe-bd2e-4c1a-bc3b-8cd6bdb58cdb"
 
-# ⚠️ यहाँ -100xxxxxxxxx को हटाकर अपने Dump Group या Channel की ID डालें
-DUMP_CHAT_ID = -100xxxxxxxxx  
+# ⚠️ यहाँ अपनी असली Dump ID डालें (जैसे: -1002345678901)
+DUMP_CHAT_ID = -1004447354945
 
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
@@ -15,25 +15,27 @@ app = Flask(__name__)
 def start(msg):
     bot.reply_to(msg, "Webhook connected 🚀")
 
-# 2. डंप फीचर का मुख्य लॉजिक (यह यूज़र की हर फ़ाइल/बैच को डंप में भेजेगा)
+# 2. डंप फीचर का मुख्य लॉजिक (यूज़र का हर बैच/फ़ाइल डंप में फॉरवर्ड होगा)
 @bot.message_handler(func=lambda message: True, content_types=['text', 'audio', 'document', 'photo', 'video', 'voice'])
 def handle_all_messages(msg):
-    # (यहाँ आपका बैच निकालने या फाइल डाउनलोड/अपलोड करने का कोड काम करेगा)
-    # उदाहरण के लिए हम यूज़र को एक रिप्लाई भेज रहे हैं:
-    sent_msg = bot.reply_to(msg, "Processing your request... 🔄")
+    # यूज़र को रिप्लाई देना कि काम शुरू हो गया है
+    bot.reply_to(msg, "Processing your request... 🔄")
     
-    # डंप चैनल में भेजने का कोड
-    if DUMP_CHAT_ID != -100xxxxxxxxx:
+    # डंप चैनल में फॉरवर्ड करने का सटीक कोड
+    if DUMP_CHAT_ID != -100xxxxxxxxxx:
         try:
-            # bot.copy_message यूज़र द्वारा भेजी गई फ़ाइल को बिना दोबारा अपलोड किए सीधे डंप में कॉपी कर देगा
-            bot.copy_message(
+            # पहले डंप चैनल में यूज़र की जानकारी भेजें
+            user_info = f"📥 **NEW BATCH REQUEST**\n\n👤 **Name:** {msg.from_user.first_name}\n🆔 **ID:** `{msg.from_user.id}`"
+            bot.send_message(chat_id=DUMP_CHAT_ID, text=user_info)
+            
+            # अब यूज़र का भेजा हुआ मैसेज/फ़ाइल डंप चैनल में सीधे फॉरवर्ड करें
+            bot.forward_message(
                 chat_id=DUMP_CHAT_ID,
                 from_chat_id=msg.chat.id,
-                message_id=msg.message_id,
-                caption=f"👤 **User:** {msg.from_user.first_name}\n🆔 **ID:** `{msg.from_user.id}`\n🌐 **Username:** @{msg.from_user.username if msg.from_user.username else 'None'}"
+                message_id=msg.message_id
             )
         except Exception as e:
-            print(f"Dump Group में भेजने में एरर आया: {e}")
+            print(f"🔴 Dump Error: {e}")
 
 # 3. Webhook Handling
 @app.route(f"/{TOKEN}", methods=["POST"])
@@ -48,7 +50,6 @@ def webhook():
 def home():
     return "Bot is alive"
 
-# Webhook सेट करना
 bot.remove_webhook()
 bot.set_webhook(url=f"{APP_URL}/{TOKEN}")
 
