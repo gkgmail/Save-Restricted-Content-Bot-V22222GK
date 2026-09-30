@@ -20,5 +20,3 @@ telethon-tgcrypto
 mutagen
 yt-dlp
 speedtest-cli
-pyTelegramBotAPI
-flask
