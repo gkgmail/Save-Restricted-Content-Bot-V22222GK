@@ -46,8 +46,10 @@ async def process_and_upload_link(userbot, user_id, msg_id, link, retry_count, m
             await app.delete_messages(user_id, msg_id)
         except Exception:
             pass
-        # SPEED FIX: yahan pehle `await asyncio.sleep(15)` tha — har file ke
-        # baad 15 second ki zabardasti neend. Use hata diya hai.
+        # GAP: pehle yahan 15 second ka sleep tha (bahut slow tha).
+        # Ab sirf 3 second ka halka gap hai — Telegram ke flood signals
+        # shaant rahenge aur speed par koi khaas farak nahi padega.
+        await asyncio.sleep(3)
     finally:
         pass
 
