@@ -12,6 +12,8 @@
 # License: MIT License
 # More readable 
 # ---------------------------------------------------
+# SPEED FIX: har file ke baad wala 15 second ka sleep HATA diya gaya hai.
+# SPEED FIX: per-user userbot Client par workers=100 lagaya gaya hai.
 
 import time
 import random
@@ -44,7 +46,8 @@ async def process_and_upload_link(userbot, user_id, msg_id, link, retry_count, m
             await app.delete_messages(user_id, msg_id)
         except Exception:
             pass
-        await asyncio.sleep(15)
+        # SPEED FIX: yahan pehle `await asyncio.sleep(15)` tha — har file ke
+        # baad 15 second ki zabardasti neend. Use hata diya hai.
     finally:
         pass
 
@@ -136,7 +139,8 @@ async def initialize_userbot(user_id): # this ensure the single startup .. even 
                 api_id=API_ID,
                 api_hash=API_HASH,
                 device_model=device,
-                session_string=data.get("session")
+                session_string=data.get("session"),
+                workers=100
             )
             await userbot.start()
             return userbot
