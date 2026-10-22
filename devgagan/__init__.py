@@ -11,6 +11,7 @@
 # Version: 2.0.5
 # License: MIT License
 # ---------------------------------------------------
+# SPEED FIX: userbot clients (pro / userrbot) par workers=100 lagaya gaya hai.
 
 import asyncio
 import logging
@@ -43,13 +44,13 @@ app = Client(
 sex = TelegramClient('sexrepo', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
 
 if STRING:
-    pro = Client("ggbot", api_id=API_ID, api_hash=API_HASH, session_string=STRING)
+    pro = Client("ggbot", api_id=API_ID, api_hash=API_HASH, session_string=STRING, workers=100)
 else:
     pro = None
 
 
 if DEFAULT_SESSION:
-    userrbot = Client("userrbot", api_id=API_ID, api_hash=API_HASH, session_string=DEFAULT_SESSION)
+    userrbot = Client("userrbot", api_id=API_ID, api_hash=API_HASH, session_string=DEFAULT_SESSION, workers=100)
 else:
     userrbot = None
 
@@ -58,7 +59,7 @@ telethon_client = TelegramClient('telethon_session', API_ID, API_HASH).start(bot
 # MongoDB setup
 tclient = AsyncIOMotorClient(MONGO_DB)
 tdb = tclient["telegram_bot"]  # Your database
-token = tdb["tokens"]  # Your tokens collection
+token = tdb["tokens"]
 
 async def create_ttl_index():
     """Ensure the TTL index exists for the `tokens` collection."""
