@@ -806,89 +806,68 @@ class SmartTelegramBot:
             await app.edit_message_text(sender, edit_id, f"❌ Error: {e}")
 
     async def _copy_public_message(self, app_client, userbot, sender: int, chat_id: str, message_id: int, edit_id: int):
-        """Handle copying from public channels/groups"""
+        """Handle copying from public channels/groups — BINA LOGIN ke chalega.
+        Public channel ko bot khud padh sakta hai, userbot ki zaroorat nahi.
+        Pehle direct copy (fast), fail ho to bot se download + upload."""
         target_chat_str = self.user_chat_ids.get(sender, str(sender))
         target_chat_id, topic_id = self.parse_target_chat(target_chat_str)
         file_path = None
-        
+
         try:
-            # Try direct copy first
             msg = await app_client.get_messages(chat_id, message_id)
+            if not msg or msg.empty:
+                await app.edit_message_text(sender, edit_id, "\u274c Message not found or inaccessible")
+                return
+
             custom_caption = self.user_caption_prefs.get(str(sender), "")
-            final_caption = await self._format_caption_with_custom(msg.caption or '', sender, custom_caption)
+            raw_caption = msg.caption.markdown if msg.caption else ""
+            final_caption = await self._format_caption_with_custom(raw_caption, sender, custom_caption)
 
-            if msg.media and not msg.document and not msg.video:
-                # For photos and other simple media
-                if msg.photo:
-                    result = await app_client.send_photo(target_chat_id, msg.photo.file_id, caption=final_caption, reply_to_message_id=topic_id)
-                elif msg.video:
-                    result = await app_client.send_video(target_chat_id, msg.video.file_id, caption=final_caption, reply_to_message_id=topic_id)
-                elif msg.document:
-                    result = await app_client.send_document(target_chat_id, msg.document.file_id, caption=final_caption, reply_to_message_id=topic_id)
-                
-                if 'result' in locals():
+            # Text-only message
+            if msg.text:
+                result = await app_client.send_message(target_chat_id, msg.text.markdown, reply_to_message_id=topic_id)
+                try:
                     await result.copy(LOG_GROUP)
-                    await app.delete_messages(sender, edit_id)
-                    return
-
-            elif msg.text:
-                result = await app_client.copy_message(target_chat_id, chat_id, message_id, reply_to_message_id=topic_id)
-                await result.copy(LOG_GROUP)
+                except Exception:
+                    pass
                 await app.delete_messages(sender, edit_id)
                 return
 
-            # If direct copy failed, try with userbot
-            if userbot:
-                edit_msg = await app.edit_message_text(sender, edit_id, "🔄 Trying alternative method...")
+            if not msg.media:
+                await app.edit_message_text(sender, edit_id, "\u274c Is message me koi media/text nahi hai")
+                return
+
+            # STEP 1: Direct copy — sabse fast, bina download ke (har media type)
+            try:
+                result = await app_client.copy_message(
+                    target_chat_id, chat_id, message_id,
+                    caption=final_caption if final_caption else None,
+                    reply_to_message_id=topic_id)
                 try:
-                    await userbot.join_chat(chat_id)
-                except:
+                    await result.copy(LOG_GROUP)
+                except Exception:
                     pass
-                
-                chat_id = (await userbot.get_chat(f"@{chat_id}")).id
-                msg = await userbot.get_messages(chat_id, message_id)
+                await app.delete_messages(sender, edit_id)
+                return
+            except Exception as copy_err:
+                print(f"Direct copy fail ({copy_err}) - download method try karta hun", flush=True)
 
-                if not msg or msg.service or msg.empty:
-                    await edit_msg.edit("❌ Message not found or inaccessible")
-                    return
-
-                if msg.text:
-                    await app_client.send_message(target_chat_id, msg.text.markdown, reply_to_message_id=topic_id)
-                    await edit_msg.delete()
-                    return
-
-                # Download and upload media
-                final_caption = await self._format_caption_with_custom(msg.caption.markdown if msg.caption else "", sender, custom_caption)
-                
-                progress_args = ("Downloading...", edit_msg, time.time())
-                file_path = await userbot.download_media(msg, progress=progress_bar, progress_args=progress_args)
-                file_path = await self.file_ops.process_filename(file_path, sender)
-
-                filename, file_size, media_type = self.media_processor.get_media_info(msg)
-
-                if media_type == "photo":
-                    result = await app_client.send_photo(target_chat_id, file_path, caption=final_caption, reply_to_message_id=topic_id)
-                elif file_size > self.config.SIZE_LIMIT:
-                    free_check = 0
-                    if 'chk_user' in globals():
-                        free_check = await chk_user(chat_id, sender)
-                    
-                    if free_check == 1 or not self.pro_client:
-                        await edit_msg.delete()
-                        await self.file_ops.split_large_file(file_path, app_client, sender, target_chat_id, final_caption, topic_id)
-                        return
-                    else:
-                        await self.handle_large_file_upload(file_path, sender, edit_msg, final_caption)
-                        return
-                else:
-                    upload_method = self.db.get_user_data(sender, "upload_method", "Pyrogram")
-                    if upload_method == "Telethon":
-                        await self.upload_with_telethon(file_path, sender, target_chat_id, final_caption, topic_id, edit_msg)
-                    else:
-                        await self.upload_with_pyrogram(file_path, sender, target_chat_id, final_caption, topic_id, edit_msg)
+            # STEP 2: Bot se hi download karke upload (copy fail ho tab)
+            edit_msg = await app.edit_message_text(sender, edit_id, "**\U0001f4e5 Downloading...**")
+            progress_args = ("\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 **__Downloading...__**\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", edit_msg, time.time())
+            file_path = await app_client.download_media(msg, progress=progress_bar, progress_args=progress_args)
+            if not file_path:
+                await edit_msg.edit("\u274c Download fail ho gaya")
+                return
+            file_path = await self.file_ops.process_filename(file_path, sender)
+            await self.upload_with_pyrogram(file_path, sender, target_chat_id, final_caption, topic_id, edit_msg)
 
         except Exception as e:
             print(f"Public message copy error: {e}")
+            try:
+                await app.edit_message_text(sender, edit_id, f"\u274c Error: {e}")
+            except Exception:
+                pass
         finally:
             if file_path:
                 await self.file_ops._cleanup_file(file_path)
