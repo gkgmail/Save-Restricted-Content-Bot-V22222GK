@@ -81,12 +81,12 @@ async def get_seconds(time_string):
         return value * 86400 * 365
     else:
         return 0
+PROGRESS_BAR = """
 ╭━━━━❰ᴘʀᴏɢʀᴇss ʙᴀʀ❱━➣
-┣⪼ 🗂️ : 145.0 MB | 368.6 MB
-┣⪼ ⏳️ : 39.34%
-┣⪼ 🚀 : 4.83 MB/s
-┣⪼ ⏱️ : 1m, 16s
-┣⪼Message ID: 516
+┣⪼ 🗂️ : {1} | {2}
+┣⪼ ⏳️ : {0}%
+┣⪼ 🚀 : {3}/s
+┣⪼ ⏱️ : {4}
 ╰━━━━━━━━━━━━━━━➣
 """
 async def progress_bar(current, total, ud_type, message, start):
